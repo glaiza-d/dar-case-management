@@ -1,0 +1,109 @@
+You are a system analyst and developer, working on a project to build a web-based case management system for a government agency, Department of Agrarian Reform. The type of cases include disputes, complaints, inquiries, and administrative tasks in operations.
+
+The application will be built using the following tech stack:
+Django
+React
+Postgres
+
+The initial folder structure of the application code will be as follows:
+
+├── backend
+│   ├── api
+│   └── backend
+├── frontend
+│   └── node_modules
+│   └── public
+│   └── src
+│      ├── assets
+│      ├── components
+│      ├── pages
+│      └── styles
+└── README.md
+
+Note: Make sure to include all the standard django and react files and generate the necessary env and route files for the application to run on localhost. Before you begin writing code, analyze the existing codebase in /django-react-app and then suggest the necessary steps for any additional setup or installation.
+
+The application will have the following core features:
+
+- Authentication and authorization (JWT and RBAC) 
+- User management (add users, roles, and permissions)
+- Case management (create, update, assign, search, and view records) 
+- Case workflow automation (case assignment rules, status change notifications, prioritization)
+- File and document storage (import data and upload documents) 
+- Case prioritization, classification, and analytics dashboard
+
+The user roles will be defined as follows:
+
+Admin User - Full access
+Editor User - Create, update, search, and view records
+Viewer User - Search and view records
+
+The application will have the following pages and components:
+
+Login Page - Serves as the landing page that includes email and password input fields with validation, and a login button with clean, centered layout with logo placeholder at the top.
+
+Dashboard - Displays key metrics and visualizations including case status distribution (pie chart), open cases by priority (bar chart), case volume trends over time (line chart), and cases by assignee (bar chart). The dashboard provides a quick overview with summary cards showing total cases, open cases, in-progress cases, and resolved cases.
+
+Case Management - Features a complete CRUD interface with table view, search functionality, pagination, create/edit/delete operations, detailed case viewing with editable fields, activity logs showing case history, and file import functionality. Cases can be filtered by ID, title, or assignee, and are displayed with color-coded status and priority badges.
+
+User Management - Provides user administration with add/edit/delete capabilities, role assignment (Admin, Editor, Viewer), department management, user details viewing, and a dedicated permissions management dialog where you can assign granular permissions like "All Access", "User Management", "Case Management", etc.
+
+My Account - Allows users to view and edit their profile information, change their password with show/hide toggles, and logout. The profile section displays user role, department, join date, and contact information.
+
+The layout features a collapsible left sidebar with navigation, a header with logo placeholder and user information (showing user icon and name when logged in), and a footer with copyright, office address, and logo placeholders. The entire design uses a clean white background with gray accents and blue highlights for a professional, minimalist appearance.
+
+
+Use the following database schema as reference:
+
+users
+    user_id (PK)
+    name
+    email
+    password_hash
+    role_id
+    created_at
+
+roles
+    role_id (PK)
+    name
+    permissions
+
+permissions
+    permission_id (PK)
+    name
+
+cases
+    case_id (PK)
+    name
+    location
+    status
+    description
+    priority
+    created_by
+    assigned_to
+    created_date
+    updated_date
+    comments
+    attachments
+
+case_workflow
+    workflow_id (PK)
+    case_id
+    previous_status
+    new_status
+    changed_by
+    timestamp
+
+case_comments
+    comment_id
+    case_id
+    user_id
+    comment
+    timestamp
+
+case_attachments
+    attachment_id
+    case_id
+    file_name
+    file_path
+    uploaded_by
+
