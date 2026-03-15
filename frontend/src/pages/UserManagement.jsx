@@ -50,30 +50,20 @@ function UserManagement() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (editingUser) {
-        // For editing, we only update certain fields
-        await api.put(`/api/users/${editingUser.id}/`, {
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          email: formData.email,
-          profile: {
-            role: formData.role_id ? parseInt(formData.role_id) : null
-          }
-        });
-      } else {
-        await api.post("/api/user/register/", formData);
-      }
+      await api.post("/api/user/register/", formData);
       setShowModal(false);
-      setEditingUser(null);
       resetForm();
       fetchUsers();
     } catch (error) {
-      console.error("Error saving user:", error);
-      alert("Error saving user. Please try again.");
+      console.error("Error creating user:", error);
+      if (error.response) {
+        console.error("Server response:", error.response.data);
+      }
+      alert("Error creating user. Please try again.");
     }
   };
 
-  const handleEdit = (user) => {
+  const handleEditRole = async (user) => {
     setEditingUser(user);
     setFormData({
       username: user.username,
@@ -84,6 +74,36 @@ function UserManagement() {
       role_id: user.profile?.role?.id || ""
     });
     setShowModal(true);
+  };
+
+  const handleUpdateRole = async (e) => {
+    e.preventDefault();
+    try {
+      // Update user fields
+      await api.put(`/api/users/${editingUser.id}/`, {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email
+      });
+      
+      // Update role
+      if (formData.role_id) {
+        await api.patch(`/api/users/${editingUser.id}/profile/`, {
+          role: parseInt(formData.role_id)
+        });
+      }
+      
+      setShowModal(false);
+      setEditingUser(null);
+      resetForm();
+      fetchUsers();
+    } catch (error) {
+      console.error("Error updating user:", error);
+      if (error.response) {
+        console.error("Server response:", error.response.data);
+      }
+      alert("Error updating user. Please try again.");
+    }
   };
 
   const handleDelete = async (userId) => {
@@ -112,6 +132,16 @@ function UserManagement() {
     setEditingUser(null);
     resetForm();
     setShowModal(true);
+  };
+
+  const getRoleWithPermissions = (user) => {
+    const roleName = user.profile?.role?.name || "Viewer";
+    const rolePermissions = {
+      "Admin": "Full Access",
+      "Editor": "Create, Edit, View",
+      "Viewer": "View Only"
+    };
+    return `${roleName} - ${rolePermissions[roleName] || "View Only"}`;
   };
 
   if (loading) {
@@ -147,7 +177,7 @@ function UserManagement() {
               <th>Email</th>
               <th>First Name</th>
               <th>Last Name</th>
-              <th>Role</th>
+              <th>Role & Permissions</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -160,12 +190,12 @@ function UserManagement() {
                 <td>{user.last_name || "-"}</td>
                 <td>
                   <span className="role-badge">
-                    {user.profile?.role?.name || "Viewer"}
+                    {getRoleWithPermissions(user)}
                   </span>
                 </td>
                 <td>
-                  <button className="btn-edit" onClick={() => handleEdit(user)}>
-                    Edit
+                  <button className="btn-edit" onClick={() => handleEditRole(user)}>
+                    Edit Role
                   </button>
                   <button className="btn-delete" onClick={() => handleDelete(user.id)}>
                     Delete
@@ -183,15 +213,15 @@ function UserManagement() {
         )}
       </div>
 
-      {/* Modal */}
+      {/* Modal - Add New User or Edit Role */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editingUser ? "Edit User" : "New User"}</h2>
+              <h2>{editingUser ? "Edit User Role" : "New User"}</h2>
               <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
             </div>
-            <form onSubmit={handleSubmit} className="modal-form">
+            <form onSubmit={editingUser ? handleUpdateRole : handleSubmit} className="modal-form">
               <div className="form-group">
                 <label>Username</label>
                 <input
@@ -209,7 +239,7 @@ function UserManagement() {
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required={!editingUser}
+                    required
                   />
                 </div>
               )}
@@ -244,11 +274,12 @@ function UserManagement() {
                 <select
                   value={formData.role_id}
                   onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
+                  required
                 >
                   <option value="">Select Role</option>
                   {roles.map((role) => (
                     <option key={role.id} value={role.id}>
-                      {role.name}
+                      {role.name} {role.description ? `- ${role.description}` : ""}
                     </option>
                   ))}
                 </select>

@@ -11,7 +11,7 @@ import uuid
 
 from .models import Role, UserProfile, Case, CaseWorkflow, CaseComment, CaseAttachment
 from .serializers import (
-    RoleSerializer, UserSerializer, UserCreateSerializer, 
+    RoleSerializer, UserSerializer, UserCreateSerializer, UserUpdateSerializer,
     CaseSerializer, CaseListSerializer, CaseWorkflowSerializer,
     CaseCommentSerializer, CaseAttachmentSerializer
 )
@@ -55,8 +55,33 @@ class UserListCreate(generics.ListCreateAPIView):
 
 class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all().select_related('profile', 'profile__role')
-    serializer_class = UserSerializer
     permission_classes = [IsAdmin]
+    
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return UserUpdateSerializer
+        return UserSerializer
+
+
+class UserProfileUpdate(generics.UpdateAPIView):
+    """Update user profile including role"""
+    queryset = User.objects.all()
+    permission_classes = [IsAdmin]
+    
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        
+        # Update profile fields
+        if 'role' in request.data and request.data['role']:
+            profile.role_id = request.data['role']
+        if 'phone' in request.data:
+            profile.phone = request.data.get('phone', '')
+        if 'address' in request.data:
+            profile.address = request.data.get('address', '')
+        profile.save()
+        
+        return Response({'status': 'Profile updated successfully'})
 
 
 class CurrentUserView(generics.RetrieveUpdateAPIView):
@@ -64,6 +89,9 @@ class CurrentUserView(generics.RetrieveUpdateAPIView):
     
     def get_serializer_class(self):
         return UserSerializer
+    
+    def get_object(self):
+        return User.objects.select_related('profile', 'profile__role').get(pk=self.request.user.pk)
 
     def get_object(self):
         return self.request.user
@@ -134,10 +162,11 @@ class CaseListCreate(generics.ListCreateAPIView):
         return CaseSerializer
 
     def perform_create(self, serializer):
-        # Generate unique case number
-        case_number = f"CASE-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+        # Generate unique case number (format: YYYYMMDD-XXX)
+        case_number = f"{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:3].upper()}"
         serializer.save(
             created_by=self.request.user,
+            assigned_to=self.request.user,
             case_number=case_number
         )
 

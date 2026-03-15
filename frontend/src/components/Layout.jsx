@@ -1,14 +1,20 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { LayoutDashboard, FolderOpen, Users, UserCircle } from "lucide-react";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
+import DARLogo from "../assets/HEADER 4A.png";
 
 function Layout({ children }) {
   const navigate = useNavigate();
-  const user = localStorage.getItem("username") || "User";
+  const userFullName = localStorage.getItem("userFullName") || localStorage.getItem("username") || "User";
+  const userRole = localStorage.getItem("userRole") || "Viewer";
+  const isAdmin = userRole === "Admin";
 
   const handleLogout = () => {
     localStorage.removeItem(ACCESS_TOKEN);
     localStorage.removeItem(REFRESH_TOKEN);
     localStorage.removeItem("username");
+    localStorage.removeItem("userFullName");
+    localStorage.removeItem("userRole");
     navigate("/login");
   };
 
@@ -16,21 +22,23 @@ function Layout({ children }) {
     <div className="layout">
       {/* Sidebar */}
       <aside className="sidebar">
-        <div className="sidebar-header">
-          <h2>DAR CMS</h2>
-          <p>Case Management</p>
-        </div>
         <nav className="sidebar-nav">
           <NavLink to="/dashboard" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+            <LayoutDashboard size={20} />
             Dashboard
           </NavLink>
           <NavLink to="/cases" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+            <FolderOpen size={20} />
             Cases
           </NavLink>
-          <NavLink to="/users" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-            Users
-          </NavLink>
+          {isAdmin && (
+            <NavLink to="/users" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+              <Users size={20} />
+              Users
+            </NavLink>
+          )}
           <NavLink to="/account" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+            <UserCircle size={20} />
             My Account
           </NavLink>
         </nav>
@@ -38,14 +46,13 @@ function Layout({ children }) {
 
       {/* Main Content */}
       <div className="main-container">
-        {/* Header */}
+        {/* Header with Logo */}
         <header className="header">
-          <div className="header-title">
-            <h1>Department of Agrarian Reform</h1>
-            <h2>Case Management System</h2>
+          <div className="header-logo">
+            <img src={DARLogo} alt="DAR Logo" className="dar-logo" />
           </div>
           <div className="header-user">
-            <span className="user-name">{user}</span>
+            <span className="user-name">{userFullName} ({userRole})</span>
             <button onClick={handleLogout} className="logout-btn">
               Logout
             </button>

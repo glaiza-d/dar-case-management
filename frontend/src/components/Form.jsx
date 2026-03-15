@@ -22,6 +22,29 @@ function Form({ route, method }) {
             if (method === "login") {
                 localStorage.setItem(ACCESS_TOKEN, res.data.access);
                 localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+                
+                // Fetch current user to get role and full name
+                try {
+                    const userRes = await api.get("/api/user/me/");
+                    const userData = userRes.data;
+                    localStorage.setItem("username", userData.username);
+                    
+                    // Store full name
+                    const fullName = `${userData.first_name || ''} ${userData.last_name || ''}`.trim();
+                    localStorage.setItem("userFullName", fullName || userData.username);
+                    
+                    // Get role from profile
+                    const roleName = userData.profile?.role_name || 
+                                     userData.profile?.role?.name || 
+                                     "Viewer";
+                    localStorage.setItem("userRole", roleName);
+                } catch (userError) {
+                    console.error("Error fetching user info:", userError);
+                    localStorage.setItem("username", username);
+                    localStorage.setItem("userFullName", username);
+                    localStorage.setItem("userRole", "Viewer");
+                }
+                
                 navigate("/")
             } else {
                 navigate("/login")

@@ -54,6 +54,17 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
+class UserUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating user - username and password not required"""
+    
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'first_name', 'last_name']
+        extra_kwargs = {
+            'email': {'required': False}
+        }
+
+
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     role_id = serializers.IntegerField(write_only=True, required=False)

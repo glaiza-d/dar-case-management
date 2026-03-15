@@ -31,33 +31,23 @@ body {
   overflow-y: auto;
 }
 
-.sidebar-header {
-  padding: 20px;
-  background-color: #0d1f3c;
-  text-align: center;
-}
-
-.sidebar-header h2 {
-  font-size: 1.5rem;
-  margin-bottom: 5px;
-}
-
-.sidebar-header p {
-  font-size: 0.85rem;
-  opacity: 0.8;
-}
-
 .sidebar-nav {
   padding: 20px 0;
 }
 
 .nav-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 15px 25px;
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
   transition: all 0.3s;
   border-left: 4px solid transparent;
+}
+
+.nav-icon {
+  flex-shrink: 0;
 }
 
 .nav-link:hover {
@@ -69,6 +59,10 @@ body {
   background-color: rgba(255, 255, 255, 0.15);
   border-left-color: #3b82f6;
   color: white;
+}
+
+.nav-link svg {
+  flex-shrink: 0;
 }
 
 /* Main Container */
@@ -83,22 +77,25 @@ body {
 /* Header */
 .header {
   background-color: white;
-  padding: 15px 30px;
+  padding: 10px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.header-title h1 {
-  font-size: 1.3rem;
-  color: #1a365d;
+.header-logo {
+  display: flex;
+  align-items: center;
 }
 
-.header-title h2 {
-  font-size: 0.9rem;
-  color: #666;
-  font-weight: normal;
+.dar-logo {
+  height: 50px;
+  width: auto;
+}
+
+.header-title {
+  display: none;
 }
 
 .header-user {
@@ -268,6 +265,193 @@ body {
 
 .data-table tr:hover {
   background-color: #f9fafb;
+}
+
+/* Clickable Table Row */
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.clickable-row:hover {
+  background-color: #e8f0fe !important;
+}
+
+/* Modal Large */
+.modal-large {
+  max-width: 700px;
+}
+
+.modal-body {
+  padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #e5e5e5;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Case Details */
+.case-details {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.detail-row strong {
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.detail-row span,
+.detail-row p {
+  color: #6b7280;
+}
+
+.detail-section {
+  margin-top: 10px;
+  padding-top: 15px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.detail-section h3 {
+  color: #1a365d;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+/* Attachment List */
+.attachment-list {
+  list-style: none;
+  padding: 0;
+}
+
+.attachment-list li {
+  padding: 8px 0;
+}
+
+.attachment-list a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.attachment-list a:hover {
+  text-decoration: underline;
+}
+
+/* Comments Section */
+.comments-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.comments-section h3 {
+  color: #1a365d;
+  font-size: 1rem;
+  margin-bottom: 15px;
+}
+
+.comments-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+}
+
+.no-comments {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.comment-item {
+  padding: 12px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.comment-header strong {
+  color: #1a365d;
+  font-size: 0.9rem;
+}
+
+.comment-date {
+  color: #9ca3af;
+  font-size: 0.8rem;
+}
+
+.comment-item p {
+  color: #4b5563;
+  margin: 0;
+}
+
+.add-comment {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-comment textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.add-comment button {
+  align-self: flex-end;
+}
+
+/* Attachment Options in Form */
+.attachment-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.attachment-type-select {
+  display: flex;
+  gap: 20px;
+}
+
+.attachment-type-select label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-weight: normal;
+}
+
+.file-input,
+.file-link-input {
+  padding: 8px;
+  border: 1px dashed #d1d5db;
+  border-radius: 4px;
+  background-color: #f9fafb;
+}
+
+.file-link-input {
+  border-style: solid;
 }
 
 /* Status Badges */

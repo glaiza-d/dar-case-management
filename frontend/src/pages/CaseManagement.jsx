@@ -5,9 +5,21 @@ function CaseManagement() {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingCase, setViewingCase] = useState(null);
   const [editingCase, setEditingCase] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  
+  // Comments and attachments state
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState("");
+  const [attachments, setAttachments] = useState([]);
+  
+  // File upload/link state
+  const [attachmentType, setAttachmentType] = useState("file"); // 'file' or 'link'
+  const [fileLink, setFileLink] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -38,21 +50,98 @@ function CaseManagement() {
     }
   };
 
+  const fetchCaseDetails = async (caseId) => {
+    try {
+      const res = await api.get(`/api/cases/${caseId}/`);
+      setViewingCase(res.data);
+      setComments(res.data.comments || []);
+      setAttachments(res.data.attachments || []);
+    } catch (error) {
+      console.error("Error fetching case details:", error);
+    }
+  };
+
+  const handleRowClick = (caseItem) => {
+    fetchCaseDetails(caseItem.id);
+    setShowViewModal(true);
+    setEditingCase(caseItem);
+    setFormData({
+      name: caseItem.name,
+      location: caseItem.location,
+      status: caseItem.status,
+      priority: caseItem.priority,
+      description: caseItem.description,
+      assigned_to: caseItem.assigned_to || ""
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Prepare form data - only send editable fields
+      const submitData = {
+        name: formData.name,
+        location: formData.location,
+        status: formData.status,
+        description: formData.description,
+        priority: formData.priority,
+        assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : null
+      };
+      
+      console.log("Submitting case data:", submitData);
+      
+      let caseId;
       if (editingCase) {
-        await api.put(`/api/cases/${editingCase.id}/`, formData);
+        const res = await api.put(`/api/cases/${editingCase.id}/`, submitData);
+        caseId = editingCase.id;
       } else {
-        await api.post("/api/cases/", formData);
+        const res = await api.post("/api/cases/", submitData);
+        caseId = res.data.id;
       }
+      
+      // Handle attachment upload/link (only for new cases)
+      if (!editingCase && attachmentType === "file" && selectedFile) {
+        const formDataFile = new FormData();
+        formDataFile.append("file", selectedFile);
+        formDataFile.append("file_name", selectedFile.name);
+        formDataFile.append("file_path", selectedFile.name);
+        await api.post(`/api/cases/${caseId}/attachments/`, formDataFile, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+      } else if (!editingCase && attachmentType === "link" && fileLink) {
+        await api.post(`/api/cases/${caseId}/attachments/`, {
+          case: caseId,
+          file_name: fileLink.split("/").pop() || "External Link",
+          file_path: fileLink,
+          file_type: "link"
+        });
+      }
+      
       setShowModal(false);
+      setShowViewModal(false);
       setEditingCase(null);
       resetForm();
       fetchCases();
     } catch (error) {
       console.error("Error saving case:", error);
+      if (error.response) {
+        console.error("Server response:", error.response.data);
+      }
       alert("Error saving case. Please try again.");
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !viewingCase) return;
+    try {
+      await api.post(`/api/cases/${viewingCase.id}/comments/`, {
+        case: viewingCase.id,
+        comment: newComment
+      });
+      setNewComment("");
+      fetchCaseDetails(viewingCase.id);
+    } catch (error) {
+      console.error("Error adding comment:", error);
     }
   };
 
@@ -67,6 +156,7 @@ function CaseManagement() {
       assigned_to: caseItem.assigned_to || ""
     });
     setShowModal(true);
+    setShowViewModal(false);
   };
 
   const handleDelete = async (caseId) => {
@@ -89,12 +179,22 @@ function CaseManagement() {
       description: "",
       assigned_to: ""
     });
+    setFileLink("");
+    setSelectedFile(null);
+    setAttachmentType("file");
   };
 
   const openNewCaseModal = () => {
     setEditingCase(null);
     resetForm();
     setShowModal(true);
+    setShowViewModal(false);
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
   };
 
   if (loading) {
@@ -114,7 +214,7 @@ function CaseManagement() {
       <div className="filters">
         <input
           type="text"
-          placeholder="Search cases..."
+          placeholder="Search cases"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
@@ -133,7 +233,7 @@ function CaseManagement() {
         </select>
       </div>
 
-      {/* Cases Table */}
+      {/* Cases Table - Clickable rows */}
       <div className="table-container">
         <table className="data-table">
           <thead>
@@ -150,7 +250,11 @@ function CaseManagement() {
           </thead>
           <tbody>
             {cases.map((caseItem) => (
-              <tr key={caseItem.id}>
+              <tr 
+                key={caseItem.id} 
+                onClick={() => handleRowClick(caseItem)}
+                className="clickable-row"
+              >
                 <td>{caseItem.case_number}</td>
                 <td>{caseItem.name}</td>
                 <td>{caseItem.location}</td>
@@ -166,7 +270,7 @@ function CaseManagement() {
                 </td>
                 <td>{caseItem.assigned_to_username || "Unassigned"}</td>
                 <td>{new Date(caseItem.created_date).toLocaleDateString()}</td>
-                <td>
+                <td onClick={(e) => e.stopPropagation()}>
                   <button className="btn-edit" onClick={() => handleEdit(caseItem)}>
                     Edit
                   </button>
@@ -186,7 +290,108 @@ function CaseManagement() {
         )}
       </div>
 
-      {/* Modal */}
+      {/* View Case Modal */}
+      {showViewModal && viewingCase && (
+        <div className="modal-overlay" onClick={() => setShowViewModal(false)}>
+          <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Case Details: {viewingCase.case_number}</h2>
+              <button className="modal-close" onClick={() => setShowViewModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="case-details">
+                <div className="detail-row">
+                  <strong>Name:</strong> <span>{viewingCase.name}</span>
+                </div>
+                <div className="detail-row">
+                  <strong>Location:</strong> <span>{viewingCase.location}</span>
+                </div>
+                <div className="detail-row">
+                  <strong>Status:</strong> 
+                  <span className={`status-badge status-${viewingCase.status.toLowerCase().replace(' ', '-')}`}>
+                    {viewingCase.status}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <strong>Priority:</strong> 
+                  <span className={`priority-badge priority-${viewingCase.priority.toLowerCase()}`}>
+                    {viewingCase.priority}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <strong>Assigned To:</strong> <span>{viewingCase.assigned_to_username || "Unassigned"}</span>
+                </div>
+                <div className="detail-row">
+                  <strong>Created By:</strong> <span>{viewingCase.created_by_username}</span>
+                </div>
+                <div className="detail-row">
+                  <strong>Description:</strong> 
+                  <p>{viewingCase.description}</p>
+                </div>
+                
+                {/* Attachments Section */}
+                {attachments.length > 0 && (
+                  <div className="detail-section">
+                    <h3>Attachments</h3>
+                    <ul className="attachment-list">
+                      {attachments.map((att) => (
+                        <li key={att.id}>
+                          <a href={att.file_path} target="_blank" rel="noopener noreferrer">
+                            {att.file_name}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {/* Comments Section */}
+                <div className="comments-section">
+                  <h3>Comments</h3>
+                  <div className="comments-list">
+                    {comments.length === 0 ? (
+                      <p className="no-comments">No comments yet.</p>
+                    ) : (
+                      comments.map((comment) => (
+                        <div key={comment.id} className="comment-item">
+                          <div className="comment-header">
+                            <strong>{comment.user_username}</strong>
+                            <span className="comment-date">
+                              {new Date(comment.timestamp).toLocaleString()}
+                            </span>
+                          </div>
+                          <p>{comment.comment}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="add-comment">
+                    <textarea
+                      placeholder="Add a comment..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      rows="3"
+                    />
+                    <button className="btn-primary" onClick={handleAddComment}>
+                      Add Comment
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setShowViewModal(false)}>
+                Close
+              </button>
+              <button className="btn-primary" onClick={() => handleEdit(viewingCase)}>
+                Edit Case
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New/Edit Case Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -248,6 +453,53 @@ function CaseManagement() {
                   rows="4"
                 />
               </div>
+              
+              {/* Attachment Option - Only for new cases */}
+              {!editingCase && (
+                <div className="form-group">
+                  <label>Attachment</label>
+                  <div className="attachment-options">
+                    <div className="attachment-type-select">
+                      <label>
+                        <input
+                          type="radio"
+                          name="attachmentType"
+                          value="file"
+                          checked={attachmentType === "file"}
+                          onChange={(e) => setAttachmentType(e.target.value)}
+                        />
+                        Upload File
+                      </label>
+                      <label>
+                        <input
+                          type="radio"
+                          name="attachmentType"
+                          value="link"
+                          checked={attachmentType === "link"}
+                          onChange={(e) => setAttachmentType(e.target.value)}
+                        />
+                        Link to File
+                      </label>
+                    </div>
+                    {attachmentType === "file" ? (
+                      <input
+                        type="file"
+                        onChange={handleFileChange}
+                        className="file-input"
+                      />
+                    ) : (
+                      <input
+                        type="url"
+                        placeholder="Enter file URL (e.g., https://example.com/file.pdf)"
+                        value={fileLink}
+                        onChange={(e) => setFileLink(e.target.value)}
+                        className="file-link-input"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+              
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>
                   Cancel

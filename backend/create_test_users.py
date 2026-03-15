@@ -12,9 +12,9 @@ from django.contrib.auth.models import User
 from api.models import UserProfile, Role
 
 # Get roles
-admin_role, _ = Role.objects.get_or_create(name='Admin', defaults={'description': 'Full access'})
-editor_role, _ = Role.objects.get_or_create(name='Editor', defaults={'description': 'Create and update'})
-viewer_role, _ = Role.objects.get_or_create(name='Viewer', defaults={'description': 'View only'})
+admin_role, _ = Role.objects.get_or_create(name='Admin', defaults={'description': 'Full Access - Can manage users, cases, and all system settings'})
+editor_role, _ = Role.objects.get_or_create(name='Editor', defaults={'description': 'Create, Edit, View - Can manage cases but not users'})
+viewer_role, _ = Role.objects.get_or_create(name='Viewer', defaults={'description': 'View Only - Read-only access to cases'})
 
 # Create Admin user
 if not User.objects.filter(username='admin').exists():

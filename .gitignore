@@ -77,3 +77,6 @@ htmlcov/
 
 # Misc
 *.env
+
+# Docs
+/docs
