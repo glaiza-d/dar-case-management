@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Role, Permission, UserProfile, Case, CaseWorkflow, CaseComment, CaseAttachment
+from .models import Role, Permission, UserProfile, Case, CaseActivity, CaseComment, CaseAttachment
 
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -94,13 +94,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return user
 
 
-class CaseWorkflowSerializer(serializers.ModelSerializer):
+class CaseActivitySerializer(serializers.ModelSerializer):
     changed_by_username = serializers.CharField(source='changed_by.username', read_only=True)
+    activity_type_display = serializers.CharField(source='get_activity_type_display', read_only=True)
     
     class Meta:
-        model = CaseWorkflow
-        fields = ['id', 'case', 'previous_status', 'new_status', 'changed_by', 'changed_by_username', 'timestamp', 'notes']
-        read_only_fields = ['timestamp']
+        model = CaseActivity
+        fields = ['id', 'case', 'activity_type', 'activity_type_display', 'previous_value', 'new_value', 'changed_by', 'changed_by_username', 'timestamp', 'notes']
+        read_only_fields = ['timestamp', 'changed_by']
 
 
 class CaseCommentSerializer(serializers.ModelSerializer):
@@ -133,7 +134,7 @@ class CaseAttachmentSerializer(serializers.ModelSerializer):
 class CaseSerializer(serializers.ModelSerializer):
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
     assigned_to_username = serializers.CharField(source='assigned_to.username', read_only=True)
-    workflows = CaseWorkflowSerializer(many=True, read_only=True)
+    activities = CaseActivitySerializer(many=True, read_only=True)
     comments = CaseCommentSerializer(many=True, read_only=True)
     attachments = CaseAttachmentSerializer(many=True, read_only=True)
     
@@ -143,7 +144,7 @@ class CaseSerializer(serializers.ModelSerializer):
             'id', 'case_number', 'name', 'location', 'status', 'description', 
             'priority', 'created_by', 'created_by_username', 'assigned_to', 
             'assigned_to_username', 'created_date', 'updated_date',
-            'workflows', 'comments', 'attachments'
+            'activities', 'comments', 'attachments'
         ]
         read_only_fields = ['case_number', 'created_by', 'created_date', 'updated_date']
 

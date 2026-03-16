@@ -9,10 +9,10 @@ from django.db.models import Q, Count
 from datetime import datetime
 import uuid
 
-from .models import Role, UserProfile, Case, CaseWorkflow, CaseComment, CaseAttachment
+from .models import Role, UserProfile, Case, CaseActivity, CaseComment, CaseAttachment
 from .serializers import (
     RoleSerializer, UserSerializer, UserCreateSerializer, UserUpdateSerializer,
-    CaseSerializer, CaseListSerializer, CaseWorkflowSerializer,
+    CaseSerializer, CaseListSerializer, CaseActivitySerializer,
     CaseCommentSerializer, CaseAttachmentSerializer
 )
 from .permissions import IsAdmin, IsEditor, IsViewer, IsAdminOrReadOnly
@@ -164,10 +164,18 @@ class CaseListCreate(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         # Generate unique case number (format: YYYYMMDD-XXX)
         case_number = f"{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:3].upper()}"
-        serializer.save(
+        case = serializer.save(
             created_by=self.request.user,
             assigned_to=self.request.user,
             case_number=case_number
+        )
+        # Track case creation activity
+        CaseActivity.objects.create(
+            case=case,
+            activity_type='case_created',
+            new_value=case_number,
+            changed_by=self.request.user,
+            notes=f"Case created: {case.name}"
         )
 
 
@@ -181,29 +189,46 @@ class CaseDetail(generics.RetrieveUpdateDestroyAPIView):
         return CaseSerializer
 
     def perform_update(self, serializer):
+        instance = serializer.instance  # Get the old instance before saving
+        # Track status change
+        old_status = instance.status
+        old_priority = instance.priority
+        
         instance = serializer.save()
-        # Track workflow if status changed
+        
+        # Track status change
         if 'status' in serializer.validated_data:
-            old_status = Case.objects.get(pk=instance.pk).status
             new_status = serializer.validated_data['status']
             if old_status != new_status:
-                CaseWorkflow.objects.create(
+                CaseActivity.objects.create(
                     case=instance,
-                    previous_status=old_status,
-                    new_status=new_status,
+                    activity_type='status_change',
+                    previous_value=old_status,
+                    new_value=new_status,
+                    changed_by=self.request.user
+                )
+        # Track priority change
+        if 'priority' in serializer.validated_data:
+            new_priority = serializer.validated_data['priority']
+            if old_priority != new_priority:
+                CaseActivity.objects.create(
+                    case=instance,
+                    activity_type='priority_change',
+                    previous_value=old_priority,
+                    new_value=new_priority,
                     changed_by=self.request.user
                 )
 
 
-# ==================== Case Workflow Views ====================
+# ==================== Case Activity Views ====================
 
-class CaseWorkflowList(generics.ListAPIView):
-    serializer_class = CaseWorkflowSerializer
+class CaseActivityList(generics.ListAPIView):
+    serializer_class = CaseActivitySerializer
     permission_classes = [IsViewer]
 
     def get_queryset(self):
         case_id = self.kwargs['case_id']
-        return CaseWorkflow.objects.filter(case_id=case_id).select_related('changed_by')
+        return CaseActivity.objects.filter(case_id=case_id).select_related('changed_by')
 
 
 # ==================== Case Comment Views ====================
@@ -255,7 +280,7 @@ class CaseAttachmentListCreate(generics.ListCreateAPIView):
             # In production, save to file system and store path
             file_path = f"attachments/{case_id}/{file_name}"
             
-            serializer.save(
+            attachment = serializer.save(
                 case=case,
                 uploaded_by=self.request.user,
                 file_name=file_name,
@@ -263,19 +288,33 @@ class CaseAttachmentListCreate(generics.ListCreateAPIView):
                 file_type=file_type,
                 file_size=file_size
             )
+            # Track attachment activity
+            CaseActivity.objects.create(
+                case=case,
+                activity_type='attachment_added',
+                new_value=f"File uploaded: {file_name}",
+                changed_by=self.request.user
+            )
         else:
             # Handle link (file_path from request data)
             file_name = self.request.data.get('file_name', 'External Link')
             file_path = self.request.data.get('file_path', '')
             file_type = self.request.data.get('file_type', 'link')
             
-            serializer.save(
+            attachment = serializer.save(
                 case=case,
                 uploaded_by=self.request.user,
                 file_name=file_name,
                 file_path=file_path,
                 file_type=file_type,
                 file_size=0
+            )
+            # Track attachment activity
+            CaseActivity.objects.create(
+                case=case,
+                activity_type='attachment_added',
+                new_value=f"Link added: {file_name}",
+                changed_by=self.request.user
             )
 
 

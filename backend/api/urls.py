@@ -18,8 +18,8 @@ urlpatterns = [
     path('cases/', views.CaseListCreate.as_view(), name='case-list-create'),
     path('cases/<int:pk>/', views.CaseDetail.as_view(), name='case-detail'),
     
-    # Case Workflow
-    path('cases/<int:case_id>/workflow/', views.CaseWorkflowList.as_view(), name='case-workflow'),
+    # Case Activity
+    path('cases/<int:case_id>/activities/', views.CaseActivityList.as_view(), name='case-activity'),
     
     # Case Comments
     path('cases/<int:case_id>/comments/', views.CaseCommentListCreate.as_view(), name='case-comment-list-create'),

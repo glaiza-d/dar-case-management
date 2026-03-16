@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api";
+import { Edit, Trash2, Eye, History, FileText, Link, Paperclip, MessageSquare } from "lucide-react";
 
 function CaseManagement() {
   const [cases, setCases] = useState([]);
@@ -16,6 +17,11 @@ function CaseManagement() {
   const [newComment, setNewComment] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
   const [attachments, setAttachments] = useState([]);
+  
+  // Activity log state
+  const [activities, setActivities] = useState([]);
+  const [showActivityModal, setShowActivityModal] = useState(false);
+  const [activityLoading, setActivityLoading] = useState(false);
   
   // File upload/link state
   const [attachmentType, setAttachmentType] = useState("file"); // 'file' or 'link'
@@ -57,8 +63,24 @@ function CaseManagement() {
       setViewingCase(res.data);
       setComments(res.data.comments || []);
       setAttachments(res.data.attachments || []);
+      setActivities(res.data.activities || []);
     } catch (error) {
       console.error("Error fetching case details:", error);
+    }
+  };
+
+  const handleViewActivity = async (caseItem, e) => {
+    e.stopPropagation();
+    setActivityLoading(true);
+    try {
+      const res = await api.get(`/api/cases/${caseItem.id}/activities/`);
+      setActivities(res.data);
+      setViewingCase(caseItem);
+      setShowActivityModal(true);
+    } catch (error) {
+      console.error("Error fetching activities:", error);
+    } finally {
+      setActivityLoading(false);
     }
   };
 
@@ -286,12 +308,17 @@ function CaseManagement() {
                 <td>{caseItem.assigned_to_username || "Unassigned"}</td>
                 <td>{new Date(caseItem.created_date).toLocaleDateString()}</td>
                 <td onClick={(e) => e.stopPropagation()}>
-                  <button className="btn-edit" onClick={() => handleEdit(caseItem)}>
-                    Edit
-                  </button>
-                  <button className="btn-delete" onClick={() => handleDelete(caseItem.id)}>
-                    Delete
-                  </button>
+                  <div className="action-buttons">
+                    <button className="btn-icon" title="View Activity" onClick={(e) => handleViewActivity(caseItem, e)}>
+                      <History size={18} />
+                    </button>
+                    <button className="btn-icon" title="Edit" onClick={() => handleEdit(caseItem)}>
+                      <Edit size={18} />
+                    </button>
+                    <button className="btn-icon btn-delete-icon" title="Delete" onClick={() => handleDelete(caseItem.id)}>
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -404,6 +431,65 @@ function CaseManagement() {
               </button>
               <button className="btn-primary" onClick={() => handleEdit(viewingCase)}>
                 Edit Case
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activity Log Modal */}
+      {showActivityModal && viewingCase && (
+        <div className="modal-overlay" onClick={() => setShowActivityModal(false)}>
+          <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2><History size={20} /> Activity Log: {viewingCase.case_number}</h2>
+              <button className="modal-close" onClick={() => setShowActivityModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              {activityLoading ? (
+                <div className="loading">Loading activities...</div>
+              ) : activities.length > 0 ? (
+                <div className="activity-list">
+                  {activities.map((activity) => (
+                    <div key={activity.id} className={`activity-item activity-${activity.activity_type}`}>
+                      <div className="activity-icon">
+                        {activity.activity_type === 'status_change' && <History size={16} />}
+                        {activity.activity_type === 'priority_change' && <History size={16} />}
+                        {activity.activity_type === 'attachment_added' && <Paperclip size={16} />}
+                        {activity.activity_type === 'case_created' && <FileText size={16} />}
+                      </div>
+                      <div className="activity-content">
+                        <div className="activity-header">
+                          <span className="activity-type">{activity.activity_type_display}</span>
+                          <span className="activity-date">{new Date(activity.timestamp).toLocaleString()}</span>
+                        </div>
+                        <div className="activity-details">
+                          {activity.previous_value && (
+                            <span className="activity-change">
+                              {activity.previous_value} → {activity.new_value}
+                            </span>
+                          )}
+                          {!activity.previous_value && (
+                            <span className="activity-change">{activity.new_value}</span>
+                          )}
+                        </div>
+                        <div className="activity-user">
+                          By: {activity.changed_by_username}
+                        </div>
+                        {activity.notes && (
+                          <div className="activity-notes">{activity.notes}</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-data">No activity recorded</p>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setShowActivityModal(false)}>
+                Close
               </button>
             </div>
           </div>

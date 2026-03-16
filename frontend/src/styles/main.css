@@ -212,6 +212,126 @@ body {
   background-color: #b91c1c;
 }
 
+/* Action Buttons with Icons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-icon {
+  padding: 6px;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background-color: #e5e7eb;
+  color: #1f2937;
+}
+
+.btn-delete-icon:hover {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* Activity Log Styles */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border-left: 4px solid #6366f1;
+}
+
+.activity-item.activity-status_change {
+  border-left-color: #f59e0b;
+}
+
+.activity-item.activity-priority_change {
+  border-left-color: #8b5cf6;
+}
+
+.activity-item.activity-attachment_added {
+  border-left-color: #3b82f6;
+}
+
+.activity-item.activity-case_created {
+  border-left-color: #6366f1;
+}
+
+.activity-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e0e7ff;
+  border-radius: 50%;
+  color: #4f46e5;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.activity-type {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.activity-date {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.activity-details {
+  margin-bottom: 4px;
+}
+
+.activity-change {
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.activity-user {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.activity-notes {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #fff;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
 /* Filters */
 .filters {
   display: flex;

@@ -80,11 +80,19 @@ class Case(models.Model):
         return f"{self.case_number} - {self.name}"
 
 
-class CaseWorkflow(models.Model):
-    """Track case status changes"""
-    case = models.ForeignKey(Case, on_delete=models.CASCADE, related_name="workflows")
-    previous_status = models.CharField(max_length=50, blank=True)
-    new_status = models.CharField(max_length=50)
+class CaseActivity(models.Model):
+    """Track case activities: status changes, priority changes, attachments"""
+    ACTIVITY_TYPES = [
+        ('status_change', 'Status Change'),
+        ('priority_change', 'Priority Change'),
+        ('attachment_added', 'Attachment Added'),
+        ('case_created', 'Case Created'),
+    ]
+    
+    case = models.ForeignKey(Case, on_delete=models.CASCADE, related_name="activities")
+    activity_type = models.CharField(max_length=50, choices=ACTIVITY_TYPES)
+    previous_value = models.CharField(max_length=255, blank=True)
+    new_value = models.CharField(max_length=255)
     changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True)
@@ -93,7 +101,7 @@ class CaseWorkflow(models.Model):
         ordering = ['-timestamp']
 
     def __str__(self):
-        return f"{self.case.case_number}: {self.previous_status} -> {self.new_status}"
+        return f"{self.case.case_number}: {self.get_activity_type_display()}"
 
 
 class CaseComment(models.Model):

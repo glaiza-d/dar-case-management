@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Role, Permission, UserProfile, Case, CaseWorkflow, CaseComment, CaseAttachment
+from .models import Role, Permission, UserProfile, Case, CaseActivity, CaseComment, CaseAttachment
 
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
@@ -24,10 +24,10 @@ class CaseAdmin(admin.ModelAdmin):
     search_fields = ['case_number', 'name', 'location']
     readonly_fields = ['case_number', 'created_date', 'updated_date']
 
-@admin.register(CaseWorkflow)
-class CaseWorkflowAdmin(admin.ModelAdmin):
-    list_display = ['case', 'previous_status', 'new_status', 'changed_by', 'timestamp']
-    list_filter = ['new_status']
+@admin.register(CaseActivity)
+class CaseActivityAdmin(admin.ModelAdmin):
+    list_display = ['case', 'activity_type', 'new_value', 'changed_by', 'timestamp']
+    list_filter = ['activity_type']
     search_fields = ['case__case_number']
 
 @admin.register(CaseComment)
