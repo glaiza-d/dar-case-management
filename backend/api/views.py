@@ -246,6 +246,7 @@ class CaseAttachmentListCreate(generics.ListCreateAPIView):
         case_id = self.kwargs['case_id']
         case = get_object_or_404(Case, pk=case_id)
         
+        # Check if it's a file upload or a link
         uploaded_file = self.request.FILES.get('file')
         if uploaded_file:
             file_name = uploaded_file.name
@@ -261,6 +262,20 @@ class CaseAttachmentListCreate(generics.ListCreateAPIView):
                 file_path=file_path,
                 file_type=file_type,
                 file_size=file_size
+            )
+        else:
+            # Handle link (file_path from request data)
+            file_name = self.request.data.get('file_name', 'External Link')
+            file_path = self.request.data.get('file_path', '')
+            file_type = self.request.data.get('file_type', 'link')
+            
+            serializer.save(
+                case=case,
+                uploaded_by=self.request.user,
+                file_name=file_name,
+                file_path=file_path,
+                file_type=file_type,
+                file_size=0
             )
 
 

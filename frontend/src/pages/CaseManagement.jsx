@@ -14,6 +14,7 @@ function CaseManagement() {
   // Comments and attachments state
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
+  const [commentLoading, setCommentLoading] = useState(false);
   const [attachments, setAttachments] = useState([]);
   
   // File upload/link state
@@ -66,11 +67,11 @@ function CaseManagement() {
     setShowViewModal(true);
     setEditingCase(caseItem);
     setFormData({
-      name: caseItem.name,
-      location: caseItem.location,
-      status: caseItem.status,
-      priority: caseItem.priority,
-      description: caseItem.description,
+      name: caseItem.name || "",
+      location: caseItem.location || "",
+      status: caseItem.status || "Open",
+      priority: caseItem.priority || "Medium",
+      description: caseItem.description || "",
       assigned_to: caseItem.assigned_to || ""
     });
   };
@@ -80,11 +81,11 @@ function CaseManagement() {
     try {
       // Prepare form data - only send editable fields
       const submitData = {
-        name: formData.name,
-        location: formData.location,
-        status: formData.status,
-        description: formData.description,
-        priority: formData.priority,
+        name: formData.name || "",
+        location: formData.location || "",
+        status: formData.status || "Open",
+        description: formData.description || "",
+        priority: formData.priority || "Medium",
         assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : null
       };
       
@@ -103,22 +104,21 @@ function CaseManagement() {
       if (!editingCase && attachmentType === "file" && selectedFile) {
         const formDataFile = new FormData();
         formDataFile.append("file", selectedFile);
-        formDataFile.append("file_name", selectedFile.name);
-        formDataFile.append("file_path", selectedFile.name);
-        await api.post(`/api/cases/${caseId}/attachments/`, formDataFile, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
+        // Note: file_name, file_path, file_type are extracted from the uploaded file by the backend
+        await api.post(`/api/cases/${caseId}/attachments/`, formDataFile);
       } else if (!editingCase && attachmentType === "link" && fileLink) {
-        await api.post(`/api/cases/${caseId}/attachments/`, {
-          case: caseId,
-          file_name: fileLink.split("/").pop() || "External Link",
-          file_path: fileLink,
-          file_type: "link"
-        });
+        const formDataLink = new FormData();
+        formDataLink.append("file_name", fileLink.split("/").pop() || "External Link");
+        formDataLink.append("file_path", fileLink);
+        formDataLink.append("file_type", "link");
+        await api.post(`/api/cases/${caseId}/attachments/`, formDataLink);
       }
       
       setShowModal(false);
-      setShowViewModal(false);
+      setShowViewModal(true);
+      // Fetch the newly created case details to show in view modal
+      const newCaseRes = await api.get(`/api/cases/${caseId}/`);
+      setViewingCase(newCaseRes.data);
       setEditingCase(null);
       resetForm();
       fetchCases();
@@ -132,27 +132,42 @@ function CaseManagement() {
   };
 
   const handleAddComment = async () => {
-    if (!newComment.trim() || !viewingCase) return;
+    if (!newComment.trim()) {
+      alert("Please enter a comment.");
+      return;
+    }
+    if (!viewingCase) {
+      alert("No case selected.");
+      return;
+    }
+    
+    setCommentLoading(true);
     try {
+      // Only send comment field - case and user are auto-set by the backend
       await api.post(`/api/cases/${viewingCase.id}/comments/`, {
-        case: viewingCase.id,
         comment: newComment
       });
       setNewComment("");
       fetchCaseDetails(viewingCase.id);
     } catch (error) {
       console.error("Error adding comment:", error);
+      if (error.response) {
+        console.error("Server response:", error.response.data);
+      }
+      alert("Error adding comment. Please try again.");
+    } finally {
+      setCommentLoading(false);
     }
   };
 
   const handleEdit = (caseItem) => {
     setEditingCase(caseItem);
     setFormData({
-      name: caseItem.name,
-      location: caseItem.location,
-      status: caseItem.status,
-      priority: caseItem.priority,
-      description: caseItem.description,
+      name: caseItem.name || "",
+      location: caseItem.location || "",
+      status: caseItem.status || "Open",
+      priority: caseItem.priority || "Medium",
+      description: caseItem.description || "",
       assigned_to: caseItem.assigned_to || ""
     });
     setShowModal(true);
@@ -214,7 +229,7 @@ function CaseManagement() {
       <div className="filters">
         <input
           type="text"
-          placeholder="Search cases"
+          placeholder="Search by case number, name, or location..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
@@ -372,8 +387,12 @@ function CaseManagement() {
                       onChange={(e) => setNewComment(e.target.value)}
                       rows="3"
                     />
-                    <button className="btn-primary" onClick={handleAddComment}>
-                      Add Comment
+                    <button 
+                      className="btn-primary" 
+                      onClick={handleAddComment}
+                      disabled={commentLoading}
+                    >
+                      {commentLoading ? "Adding..." : "Add Comment"}
                     </button>
                   </div>
                 </div>
@@ -401,21 +420,23 @@ function CaseManagement() {
             </div>
             <form onSubmit={handleSubmit} className="modal-form">
               <div className="form-group">
-                <label>Case Name</label>
+                <label>Case Name <span className="required-mark">*required</span></label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                  placeholder="Enter case name"
                 />
               </div>
               <div className="form-group">
-                <label>Location</label>
+                <label>Location <span className="required-mark">*required</span></label>
                 <input
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   required
+                  placeholder="Enter location"
                 />
               </div>
               <div className="form-row">
@@ -446,11 +467,13 @@ function CaseManagement() {
                 </div>
               </div>
               <div className="form-group">
-                <label>Description</label>
+                <label>Description <span className="required-mark">*required</span></label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows="4"
+                  required
+                  placeholder="Enter description"
                 />
               </div>
               

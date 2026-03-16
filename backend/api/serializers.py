@@ -105,20 +105,29 @@ class CaseWorkflowSerializer(serializers.ModelSerializer):
 
 class CaseCommentSerializer(serializers.ModelSerializer):
     user_username = serializers.CharField(source='user.username', read_only=True)
+    case = serializers.PrimaryKeyRelatedField(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     
     class Meta:
         model = CaseComment
         fields = ['id', 'case', 'user', 'user_username', 'comment', 'timestamp', 'updated_at']
-        read_only_fields = ['timestamp', 'updated_at']
+        read_only_fields = ['timestamp', 'updated_at', 'user', 'case']
 
 
 class CaseAttachmentSerializer(serializers.ModelSerializer):
     uploaded_by_username = serializers.CharField(source='uploaded_by.username', read_only=True)
+    case = serializers.PrimaryKeyRelatedField(read_only=True)
+    uploaded_by = serializers.PrimaryKeyRelatedField(read_only=True)
+    # Make fields optional since they're populated in perform_create
+    file_name = serializers.CharField(required=False, allow_blank=True)
+    file_path = serializers.CharField(required=False, allow_blank=True)
+    file_type = serializers.CharField(required=False, allow_blank=True)
+    file_size = serializers.IntegerField(required=False, default=0)
     
     class Meta:
         model = CaseAttachment
         fields = ['id', 'case', 'file_name', 'file_path', 'file_type', 'file_size', 'uploaded_by', 'uploaded_by_username', 'uploaded_at']
-        read_only_fields = ['uploaded_at']
+        read_only_fields = ['uploaded_at', 'case', 'uploaded_by']
 
 
 class CaseSerializer(serializers.ModelSerializer):
@@ -146,7 +155,7 @@ class CaseListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Case
         fields = [
-            'id', 'case_number', 'name', 'location', 'status', 'priority',
+            'id', 'case_number', 'name', 'location', 'status', 'priority', 'description',
             'created_by', 'created_by_username', 'assigned_to', 'assigned_to_username',
             'created_date', 'updated_date'
         ]
