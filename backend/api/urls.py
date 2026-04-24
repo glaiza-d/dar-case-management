@@ -17,6 +17,8 @@ urlpatterns = [
     # Cases
     path('cases/', views.CaseListCreate.as_view(), name='case-list-create'),
     path('cases/<int:pk>/', views.CaseDetail.as_view(), name='case-detail'),
+    path('cases/import/csv/', views.CaseCSVImportView.as_view(), name='case-csv-import'),
+    path('cases/import/sample/', views.CaseSampleDownloadView.as_view(), name='case-csv-sample'),
     
     # Case Activity
     path('cases/<int:case_id>/activities/', views.CaseActivityList.as_view(), name='case-activity'),

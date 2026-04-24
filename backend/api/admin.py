@@ -19,8 +19,8 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Case)
 class CaseAdmin(admin.ModelAdmin):
-    list_display = ['case_number', 'name', 'status', 'priority', 'created_by', 'assigned_to', 'created_date']
-    list_filter = ['status', 'priority']
+    list_display = ['case_number', 'name', 'status', 'case_type', 'priority', 'created_by', 'assigned_to', 'created_date']
+    list_filter = ['status', 'case_type', 'priority']
     search_fields = ['case_number', 'name', 'location']
     readonly_fields = ['case_number', 'created_date', 'updated_date']
 

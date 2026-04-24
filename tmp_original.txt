@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import api from "../api";
 import { Edit, Trash2, Eye, History, FileText, Link, Paperclip, MessageSquare } from "lucide-react";
 
@@ -11,8 +11,7 @@ function CaseManagement() {
   const [editingCase, setEditingCase] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [caseTypeFilter, setCaseTypeFilter] = useState("");
-
+  
   // Comments and attachments state
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
@@ -28,19 +27,12 @@ function CaseManagement() {
   const [attachmentType, setAttachmentType] = useState("file"); // 'file' or 'link'
   const [fileLink, setFileLink] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
-
-  // CSV import state
-  const [csvFile, setCsvFile] = useState(null);
-  const [importLoading, setImportLoading] = useState(false);
-  const [importResult, setImportResult] = useState(null);
-  const [showImportModal, setShowImportModal] = useState(false);
-
+  
   // Form state
   const [formData, setFormData] = useState({
     name: "",
     location: "",
     status: "Open",
-    case_type: "Inquiry",
     priority: "Medium",
     description: "",
     assigned_to: ""
@@ -48,15 +40,14 @@ function CaseManagement() {
 
   useEffect(() => {
     fetchCases();
-  }, [searchTerm, statusFilter, caseTypeFilter]);
+  }, [searchTerm, statusFilter]);
 
   const fetchCases = async () => {
     try {
       const params = new URLSearchParams();
       if (searchTerm) params.append("search", searchTerm);
       if (statusFilter) params.append("status", statusFilter);
-      if (caseTypeFilter) params.append("case_type", caseTypeFilter);
-
+      
       const res = await api.get(`/api/cases/?${params.toString()}`);
       setCases(res.data);
     } catch (error) {
@@ -101,7 +92,6 @@ function CaseManagement() {
       name: caseItem.name || "",
       location: caseItem.location || "",
       status: caseItem.status || "Open",
-      case_type: caseItem.case_type || "Inquiry",
       priority: caseItem.priority || "Medium",
       description: caseItem.description || "",
       assigned_to: caseItem.assigned_to || ""
@@ -116,7 +106,6 @@ function CaseManagement() {
         name: formData.name || "",
         location: formData.location || "",
         status: formData.status || "Open",
-        case_type: formData.case_type || "Inquiry",
         description: formData.description || "",
         priority: formData.priority || "Medium",
         assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : null
@@ -199,7 +188,6 @@ function CaseManagement() {
       name: caseItem.name || "",
       location: caseItem.location || "",
       status: caseItem.status || "Open",
-      case_type: caseItem.case_type || "Inquiry",
       priority: caseItem.priority || "Medium",
       description: caseItem.description || "",
       assigned_to: caseItem.assigned_to || ""
@@ -224,7 +212,6 @@ function CaseManagement() {
       name: "",
       location: "",
       status: "Open",
-      case_type: "Inquiry",
       priority: "Medium",
       description: "",
       assigned_to: ""
@@ -247,83 +234,6 @@ function CaseManagement() {
     }
   };
 
-  const handleCsvFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setCsvFile(e.target.files[0]);
-    }
-  };
-
-  const handleCsvImport = async () => {
-    if (!csvFile) {
-      alert("Please select a CSV file to import.");
-      return;
-    }
-
-    setImportLoading(true);
-    setImportResult(null);
-    try {
-      const formData = new FormData();
-      formData.append('csv_file', csvFile);
-
-      const res = await api.post('/api/cases/import/csv/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      setImportResult(res.data);
-      if (res.data.imported_count > 0) {
-        fetchCases(); // Refresh the cases list
-      }
-    } catch (error) {
-      console.error("Error importing CSV:", error);
-      if (error.response) {
-        setImportResult({
-          imported_count: 0,
-          errors: [error.response.data.error || 'Failed to import CSV']
-        });
-      } else {
-        setImportResult({
-          imported_count: 0,
-          errors: ['Network error occurred']
-        });
-      }
-    } finally {
-      setImportLoading(false);
-    }
-  };
-
-  const openImportModal = () => {
-    setShowImportModal(true);
-    setCsvFile(null);
-    setImportResult(null);
-  };
-
-  const closeImportModal = () => {
-    setShowImportModal(false);
-    setCsvFile(null);
-    setImportResult(null);
-  };
-
-  const downloadSampleCsv = async () => {
-    try {
-      const response = await api.get('/api/cases/import/sample/', {
-        responseType: 'blob'
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'case_import_sample.csv');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading sample CSV:", error);
-      alert("Failed to download sample CSV");
-    }
-  };
-
   if (loading) {
     return <div className="loading">Loading cases...</div>;
   }
@@ -332,14 +242,9 @@ function CaseManagement() {
     <div className="case-management">
       <div className="page-header">
         <h1>Case Management</h1>
-        <div className="header-buttons">
-          <button className="btn-secondary" onClick={openImportModal}>
-            Import CSV
-          </button>
-          <button className="btn-primary" onClick={openNewCaseModal}>
-            + New Case
-          </button>
-        </div>
+        <button className="btn-primary" onClick={openNewCaseModal}>
+          + New Case
+        </button>
       </div>
 
       {/* Filters */}
@@ -363,20 +268,6 @@ function CaseManagement() {
           <option value="Resolved">Resolved</option>
           <option value="Closed">Closed</option>
         </select>
-        <select
-          value={caseTypeFilter}
-          onChange={(e) => setCaseTypeFilter(e.target.value)}
-          className="filter-select"
-        >
-          <option value="">All Case Types</option>
-          <option value="Inquiry">Inquiry</option>
-          <option value="Mediation">Mediation</option>
-          <option value="Communication">Communication</option>
-          <option value="Stakeholders">Stakeholders</option>
-          <option value="Transmittal HR">Transmittal HR</option>
-          <option value="Transmittal PBDD">Transmittal PBDD</option>
-          <option value="Transmittal LTID">Transmittal LTID</option>
-        </select>
       </div>
 
       {/* Cases Table - Clickable rows */}
@@ -387,10 +278,9 @@ function CaseManagement() {
               <th>Case Number</th>
               <th>Name</th>
               <th>Location</th>
-                <th>Status</th>
-                <th>Case Type</th>
-                <th>Priority</th>
-                <th>Assigned To</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Assigned To</th>
               <th>Created Date</th>
               <th>Actions</th>
             </tr>
@@ -405,17 +295,12 @@ function CaseManagement() {
                 <td>{caseItem.case_number}</td>
                 <td>{caseItem.name}</td>
                 <td>{caseItem.location}</td>
-                 <td>
-                   <span className={`status-badge status-${caseItem.status.toLowerCase().replace(' ', '-')}`}>
-                     {caseItem.status}
-                   </span>
-                 </td>
-                 <td>
-                   <span className={`case-type-badge`}>
-                     {caseItem.case_type}
-                   </span>
-                 </td>
-                 <td>
+                <td>
+                  <span className={`status-badge status-${caseItem.status.toLowerCase().replace(' ', '-')}`}>
+                    {caseItem.status}
+                  </span>
+                </td>
+                <td>
                   <span className={`priority-badge priority-${caseItem.priority.toLowerCase()}`}>
                     {caseItem.priority}
                   </span>
@@ -453,7 +338,7 @@ function CaseManagement() {
           <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Case Details: {viewingCase.case_number}</h2>
-              <button className="modal-close" onClick={() => setShowViewModal(false)}>×</button>
+              <button className="modal-close" onClick={() => setShowViewModal(false)}>├ù</button>
             </div>
             <div className="modal-body">
               <div className="case-details">
@@ -463,19 +348,13 @@ function CaseManagement() {
                 <div className="detail-row">
                   <strong>Location:</strong> <span>{viewingCase.location}</span>
                 </div>
-                 <div className="detail-row">
-                   <strong>Status:</strong> 
-                   <span className={`status-badge status-${viewingCase.status.toLowerCase().replace(' ', '-')}`}>
-                     {viewingCase.status}
-                   </span>
-                 </div>
-                 <div className="detail-row">
-                   <strong>Case Type:</strong>
-                   <span className="case-type-badge">
-                     {viewingCase.case_type}
-                   </span>
-                 </div>
-                 <div className="detail-row">
+                <div className="detail-row">
+                  <strong>Status:</strong> 
+                  <span className={`status-badge status-${viewingCase.status.toLowerCase().replace(' ', '-')}`}>
+                    {viewingCase.status}
+                  </span>
+                </div>
+                <div className="detail-row">
                   <strong>Priority:</strong> 
                   <span className={`priority-badge priority-${viewingCase.priority.toLowerCase()}`}>
                     {viewingCase.priority}
@@ -564,7 +443,7 @@ function CaseManagement() {
           <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2><History size={20} /> Activity Log: {viewingCase.case_number}</h2>
-              <button className="modal-close" onClick={() => setShowActivityModal(false)}>×</button>
+              <button className="modal-close" onClick={() => setShowActivityModal(false)}>├ù</button>
             </div>
             <div className="modal-body">
               {activityLoading ? (
@@ -587,7 +466,7 @@ function CaseManagement() {
                         <div className="activity-details">
                           {activity.previous_value && (
                             <span className="activity-change">
-                              {activity.previous_value} → {activity.new_value}
+                              {activity.previous_value} ΓåÆ {activity.new_value}
                             </span>
                           )}
                           {!activity.previous_value && (
@@ -617,86 +496,13 @@ function CaseManagement() {
         </div>
       )}
 
-      {/* CSV Import Modal */}
-      {showImportModal && (
-        <div className="modal-overlay" onClick={closeImportModal}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Import Cases from CSV</h2>
-              <button className="modal-close" onClick={closeImportModal}>×</button>
-            </div>
-            <div className="modal-body">
-              <div className="import-section">
-                <p className="import-instructions">
-                  Upload a CSV file with the following columns: 
-                  <code>name, location, status, case_type, priority, description, assigned_to</code>
-                  <br />
-                  <button 
-                    type="button" 
-                    className="link-button"
-                    onClick={downloadSampleCsv}
-                  >
-                    Download sample CSV format
-                  </button>
-                </p>
-
-                <div className="form-group">
-                  <label>Select CSV File <span className="required-mark">*required</span></label>
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleCsvFileChange}
-                    className="file-input"
-                  />
-                  {csvFile && (
-                    <p className="file-name">Selected: {csvFile.name}</p>
-                  )}
-                </div>
-
-                {importResult && (
-                  <div className={`import-result ${importResult.imported_count > 0 ? 'success' : 'error'}`}>
-                    {importResult.imported_count > 0 && (
-                      <p className="success-message">
-                        Successfully imported {importResult.imported_count} case(s)
-                      </p>
-                    )}
-                    {importResult.errors && importResult.errors.length > 0 && (
-                      <div className="error-messages">
-                        <p>The following errors occurred:</p>
-                        <ul>
-                          {importResult.errors.map((error, idx) => (
-                            <li key={idx}>{error}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={closeImportModal}>
-                Close
-              </button>
-              <button 
-                className="btn-primary" 
-                onClick={handleCsvImport}
-                disabled={importLoading || !csvFile}
-              >
-                {importLoading ? 'Importing...' : 'Import CSV'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* New/Edit Case Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editingCase ? "Edit Case" : "New Case"}</h2>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+              <button className="modal-close" onClick={() => setShowModal(false)}>├ù</button>
             </div>
             <form onSubmit={handleSubmit} className="modal-form">
               <div className="form-group">
@@ -719,48 +525,33 @@ function CaseManagement() {
                   placeholder="Enter location"
                 />
               </div>
-               <div className="form-row">
-                 <div className="form-group">
-                   <label>Status</label>
-                   <select
-                     value={formData.status}
-                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                   >
-                     <option value="Open">Open</option>
-                     <option value="In Progress">In Progress</option>
-                     <option value="Pending">Pending</option>
-                     <option value="Resolved">Resolved</option>
-                     <option value="Closed">Closed</option>
-                   </select>
-                 </div>
-                 <div className="form-group">
-                   <label>Case Type</label>
-                   <select
-                     value={formData.case_type}
-                     onChange={(e) => setFormData({ ...formData, case_type: e.target.value })}
-                   >
-                     <option value="Inquiry">Inquiry</option>
-                     <option value="Mediation">Mediation</option>
-                     <option value="Communication">Communication</option>
-                     <option value="Stakeholders">Stakeholders</option>
-                     <option value="Transmittal HR">Transmittal HR</option>
-                     <option value="Transmittal PBDD">Transmittal PBDD</option>
-                     <option value="Transmittal LTID">Transmittal LTID</option>
-                   </select>
-                 </div>
-                 <div className="form-group">
-                   <label>Priority</label>
-                   <select
-                     value={formData.priority}
-                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                   >
-                     <option value="Low">Low</option>
-                     <option value="Medium">Medium</option>
-                     <option value="High">High</option>
-                     <option value="Critical">Critical</option>
-                   </select>
-                 </div>
-               </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  >
+                    <option value="Open">Open</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Resolved">Resolved</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Priority</label>
+                  <select
+                    value={formData.priority}
+                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                    <option value="Critical">Critical</option>
+                  </select>
+                </div>
+              </div>
               <div className="form-group">
                 <label>Description <span className="required-mark">*required</span></label>
                 <textarea

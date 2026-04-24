@@ -66,8 +66,8 @@ function Layout({ children }) {
 
         {/* Footer */}
         <footer className="footer">
-          <p>Department of Agrarian Reform - Case Management System</p>
-          <p>© 2026 DAR. All rights reserved.</p>
+          <p>Department of Agrarian Reform Municipal Office - Daram, Samar</p>
+          <p>© 2026 DARMO. All rights reserved.</p>
         </footer>
       </div>
     </div>

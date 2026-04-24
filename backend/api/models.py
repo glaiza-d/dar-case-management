@@ -58,10 +58,21 @@ class Case(models.Model):
         ("Critical", "Critical"),
     ]
 
+    CASE_TYPE_CHOICES = [
+        ("Inquiry", "Inquiry"),
+        ("Mediation", "Mediation"),
+        ("Communication", "Communication"),
+        ("Stakeholders", "Stakeholders"),
+        ("Transmittal HR", "Transmittal HR"),
+        ("Transmittal PBDD", "Transmittal PBDD"),
+        ("Transmittal LTID", "Transmittal LTID"),
+    ]
+
     case_number = models.CharField(max_length=50, unique=True, db_index=True)
     name = models.CharField(max_length=255, db_index=True)
     location = models.CharField(max_length=255, db_index=True)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="Open", db_index=True)
+    case_type = models.CharField(max_length=50, choices=CASE_TYPE_CHOICES, default="Inquiry", db_index=True)
     description = models.TextField()
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="Medium", db_index=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_cases")

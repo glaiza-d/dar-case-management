@@ -141,8 +141,8 @@ class CaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Case
         fields = [
-            'id', 'case_number', 'name', 'location', 'status', 'description', 
-            'priority', 'created_by', 'created_by_username', 'assigned_to', 
+            'id', 'case_number', 'name', 'location', 'status', 'case_type', 'description',
+            'priority', 'created_by', 'created_by_username', 'assigned_to',
             'assigned_to_username', 'created_date', 'updated_date',
             'activities', 'comments', 'attachments'
         ]
@@ -156,7 +156,7 @@ class CaseListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Case
         fields = [
-            'id', 'case_number', 'name', 'location', 'status', 'priority', 'description',
+            'id', 'case_number', 'name', 'location', 'status', 'case_type', 'priority', 'description',
             'created_by', 'created_by_username', 'assigned_to', 'assigned_to_username',
             'created_date', 'updated_date'
         ]
