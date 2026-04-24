@@ -80,3 +80,6 @@ htmlcov/
 
 # Docs
 /docs
+
+# Backup/Temporary files
+/tmp/*
