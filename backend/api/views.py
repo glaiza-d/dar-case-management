@@ -434,21 +434,14 @@ class CaseAttachmentListCreate(generics.ListCreateAPIView):
             original_name = uploaded_file.name
             file_type = uploaded_file.content_type
             file_size = uploaded_file.size
-            
-            # Generate file name using case_id and created_date convention
-            # Format: {case_id}_{created_date}.{extension}
-            import os
-            file_extension = os.path.splitext(original_name)[1]  # Get file extension
-            created_date = datetime.now().strftime('%Y%m%d_%H%M%S')
-            new_file_name = f"{case_id}_{created_date}{file_extension}"
-            
+
             # In production, save to file system and store path
-            file_path = f"attachments/{case_id}/{new_file_name}"
-            
+            file_path = f"attachments/{case_id}/{original_name}"
+
             attachment = serializer.save(
                 case=case,
                 uploaded_by=self.request.user,
-                file_name=new_file_name,
+                file_name=original_name,
                 file_path=file_path,
                 file_type=file_type,
                 file_size=file_size
@@ -457,7 +450,7 @@ class CaseAttachmentListCreate(generics.ListCreateAPIView):
             CaseActivity.objects.create(
                 case=case,
                 activity_type='attachment_added',
-                new_value=f"File uploaded: {new_file_name}",
+                new_value=f"File uploaded: {original_name}",
                 changed_by=self.request.user
             )
         else:
