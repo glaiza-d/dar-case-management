@@ -496,6 +496,9 @@ class DashboardStats(generics.ListAPIView):
             'assigned_to__username'
         ).annotate(count=Count('id'))
         
+        # Cases by case_type
+        cases_by_type = Case.objects.values('case_type').annotate(count=Count('id'))
+        
         # Recent cases
         recent_cases = Case.objects.order_by('-created_date')[:5]
         
@@ -503,6 +506,7 @@ class DashboardStats(generics.ListAPIView):
             'total_cases': total_cases,
             'cases_by_status': {item['status']: item['count'] for item in cases_by_status},
             'cases_by_priority': {item['priority']: item['count'] for item in cases_by_priority},
+            'cases_by_type': {item['case_type']: item['count'] for item in cases_by_type},
             'cases_by_assignee': list(cases_by_assignee),
             'recent_cases': CaseListSerializer(recent_cases, many=True).data
         })
