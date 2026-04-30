@@ -66,6 +66,7 @@ class Case(models.Model):
         ("Transmittal HR", "Transmittal HR"),
         ("Transmittal PBDD", "Transmittal PBDD"),
         ("Transmittal LTID", "Transmittal LTID"),
+        ("Transmittal Legal", "Transmittal Legal"),
     ]
 
     case_number = models.CharField(max_length=50, unique=True, db_index=True)
