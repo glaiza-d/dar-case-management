@@ -34,6 +34,9 @@ function Dashboard() {
   const priorityData = stats?.cases_by_priority ?
     Object.entries(stats.cases_by_priority).map(([name, value]) => ({ name, value })) : [];
     
+  const typeData = stats?.cases_by_type ?
+    Object.entries(stats.cases_by_type).map(([name, value]) => ({ name, value })) : [];
+    
   const assigneeData = stats?.cases_by_assignee ?
     stats.cases_by_assignee.map(item => ({ 
       name: item.assigned_to__username || 'Unassigned', 
@@ -90,17 +93,38 @@ function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Cases by Priority */}
+         {/* Cases by Priority */}
+         <div className="chart-card">
+           <h3>Cases by Priority</h3>
+           <ResponsiveContainer width="100%" height={300}>
+             <BarChart data={priorityData}>
+               <CartesianGrid strokeDasharray="3 3" />
+               <XAxis dataKey="name" />
+               <YAxis />
+               <Tooltip />
+               <Legend />
+               <Bar dataKey="value" fill="#0088FE" name="Cases" />
+             </BarChart>
+           </ResponsiveContainer>
+         </div>
+
+        {/* Cases by Type */}
         <div className="chart-card">
-          <h3>Cases by Priority</h3>
+          <h3>Cases by Type</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={priorityData}>
+            <BarChart data={typeData} margin={{ bottom: 60 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
+              <XAxis 
+                dataKey="name" 
+                angle={-45} 
+                textAnchor="end" 
+                height={120} 
+                interval={0}
+              />
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="count" fill="#0088FE" name="Cases" />
+              <Bar dataKey="value" fill="#FF8042" name="Cases" />
             </BarChart>
           </ResponsiveContainer>
         </div>

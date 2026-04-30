@@ -1,6 +1,6 @@
-# DAR Case Management System
+# DARMO Case Management System
 
-A web-based Case Management System for the Department of Agrarian Reform (DAR).
+A web-based Case Management System for the Department of Agrarian Reform Municipal Office (DARMO).
 
 ## Technology Stack
 
@@ -106,24 +106,60 @@ The frontend will run at http://localhost:5173
 
 ### Cases
 - `GET /api/cases/` - List cases (with filtering/search)
+    - Query params: `status`, `priority`, `case_type`, `assigned_to`, `search`
 - `POST /api/cases/` - Create case
 - `GET /api/cases/{id}/` - Get case details
 - `PUT /api/cases/{id}/` - Update case
 - `DELETE /api/cases/{id}/` - Delete case
+- `GET /api/cases/import/sample/` - Download CSV import template
+- `POST /api/cases/import/csv/` - Bulk import cases from CSV
 
-### Case Workflow
-- `GET /api/cases/{id}/workflow/` - Get workflow history
+### Case Activity Logs
+- `GET /api/cases/{id}/activities/` - Get activity history (status changes, priority changes, attachments, creation)
 
 ### Case Comments
 - `GET /api/cases/{id}/comments/` - List comments
 - `POST /api/cases/{id}/comments/` - Add comment
+- `GET /api/cases/{id}/comments/{pk}/` - Get comment detail
+- `PUT /api/cases/{id}/comments/{pk}/` - Update comment
+- `DELETE /api/cases/{id}/comments/{pk}/` - Delete comment
 
 ### Case Attachments
 - `GET /api/cases/{id}/attachments/` - List attachments
 - `POST /api/cases/{id}/attachments/` - Upload attachment
+    - Supports both file upload (multipart) and link submission
 
 ### Dashboard
 - `GET /api/dashboard/stats/` - Get dashboard statistics
+    - Returns: total cases, cases by status, by priority, by case_type, by assignee, recent cases
+
+## Case Types
+
+The system supports the following case types:
+
+- Inquiry
+- Mediation
+- Communication
+- Stakeholders
+- Transmittal HR
+- Transmittal PBDD
+- Transmittal LTID
+
+## Case Priorities
+
+- Low
+- Medium
+- High
+- Critical
+
+
+## Case Statuses
+- Open
+- In Progress
+- Pending
+- Resolved
+- Closed
+
 
 ## Default Roles
 
